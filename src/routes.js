@@ -11,7 +11,9 @@ const {
     editUserById,
     deleteUserById,
     getAllProducts,
+    addProducts,
     getProductById,
+    getProductByIdUser,
     editProductById,
     deleteProductById,
     login,
@@ -26,25 +28,28 @@ const routes = express.Router();
 routes.get('/users', getAllUsers);
 routes.post('/users', signupPost); 
 
-routes.get('/users/:id', requireAuth, getUserById); // Token tidak terdeteksi, harap login terlebih dahulu!
-// routes.put('/users/:id', requireAuth, editUserById); // still development
-// routes.delete('/users/:id', requireAuth, deleteUserById); //still development
+routes.get('/users/:id', getUserById); // Token tidak terdeteksi, harap login terlebih dahulu!
+routes.put('/users/:id', requireAuth, editUserById); // Token tidak terdeteksi, harap login terlebih dahulu! 
+routes.delete('/users/:id', deleteUserById); // Token tidak terdeteksi, harap login terlebih dahulu!
 
 routes.get('/products', getAllProducts);
+routes.post('/products', addProducts)
 
-// routes.get('/products/:id', requireAuth, getProductById); // still development
-// routes.get('/products/:iduser', requireAuth, getProductByIdUser); // still development
+routes.get('/products/:id', getProductById); // still development
+routes.get('products/:iduser', getProductByIdUser); // still development
 // routes.get('/products/:stok', requireAuth, getProductByStok); // still development
-// routes.put('/products/:id', requireAuth, editProductById); // still development
-// routes.delete('/products/:id', requireAuth, deleteProductById); // still developmecnt
+routes.put('/products/:id', editProductById); // still development
+routes.delete('/products/:id', deleteProductById); // still development
 
 // routes.get('/orders', getAllOrders); //still development
 
 // routes.get('/orders/:id', requireAuth, getOrderById); //still development
 // routes.get('/orders/:date', requireAuth, getOrderByDate); //still development
+// routes.put('/orders', requireAuth, editOder); //still development
+// routes.delete('/orders', requireAuth, deleteOrder); //still development
 
-routes.post('/login', login); // Password salah
+routes.post('/login', login); // secretOrPrivateKey must have a value
 
-routes.post('/logout', logout); //TypeError: res.cookie is not a function
+routes.post('/logout', logout); 
 
 module.exports = routes;
