@@ -38,4 +38,4 @@ module.exports = mysql.createConnection({
 //     user: 'root',
 //     password: '',
 //     database: 'kewarung_db',
-// });
+});
