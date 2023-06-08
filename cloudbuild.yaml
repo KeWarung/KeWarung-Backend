@@ -9,7 +9,8 @@ steps:
   id: Pushing the image to registry
 # Deploy container image to Cloud Run
 - name: 'gcr.io/cloud-builders/gcloud'
-  args: ['run', 'deploy', 'kewarungservice', '--image', 'gcr.io/$PROJECT_ID/kewarungimage', '--region', 'us-central1', '--platform', 'managed', "--allow-unauthenticated"]
+  args: ['run', 'deploy', 'kewarungservice', '--image', 'gcr.io/$PROJECT_ID/kewarungimage', '--region', 'us-central1', '--platform', 'linux/amd64', "--allow-unauthenticated"]
 
 images :
 - gcr.io/$PROJECT_ID/kewarungimage
+
