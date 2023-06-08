@@ -1,11 +1,11 @@
 const { nanoid } = require('nanoid');
-// const { Storage } = require('@google-cloud/storage');
+const { Storage } = require('@google-cloud/storage');
 const fs = require('fs-extra');
-// const multer = require('multer');
+const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 // const ffmpeg = require('fluent-ffmpeg');
-// const axios = require('axios');
+const axios = require('axios');
 const db = require('./database');
 require('dotenv').config();
 console.log(process.env.SECRET_STRING) // remove this after you've confirmed it is working
@@ -39,33 +39,35 @@ exports.signupPost = async (req, res) => {
         return response;
     }
 
-    // if (email.length < 15) {
+    // const validateEmail = (email) => {
+    //     return email.match(
+    //       /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    //     );
+    // };
+
+    // if(!validateEmail(email)){
     //     const response = res.send({
     //         status: 'Gagal',
-    //         message: 'Panjang email harus 15 karakter atau lebih!',
+    //         message: 'Alamat email tidak valid.',
     //     });
     //     response.status(400);
     //     return response;
-    // }
+    // }  
+
+    const [rows] = await db.promise().query(`SELECT * FROM tb_user WHERE email = '${req.body.email}'`);
+    if (rows.length !== 0) {
+        return res.status(500).json({ message: 'Email telah digunakan' });
+    }
 
     // Password validation
-    // if (password === '') {
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Password tidak boleh kosong.',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }
-
-    // if (password.length < 6) {
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Panjang karakter password setidaknya 6 karakter atau lebih.',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }
+    if (password === '') {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Password tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
+    }
 
     // Nama_toko validation
     if (nama_toko === '') {
@@ -77,20 +79,7 @@ exports.signupPost = async (req, res) => {
         return response;
     }
 
-    // if (nama_toko.length < 4) {
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Panjang karakter nama toko setidaknya 6 karakter atau lebih.',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }
-
-    const [rows] = await db.promise().query(`SELECT * FROM tb_user WHERE email = '${req.body.email}'`);
-    if (rows.length !== 0) {
-        return res.status(500).json({ message: 'Email telah digunakan' });
-    }
-
+    // Password Encrypt    
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -135,14 +124,21 @@ exports.editUserById = async (req, res) => {
         response.status(400);
         return response;
     }
-    // if (email.length < 15) {
+
+    // const validateEmail = (email) => {
+    //     return email.match(
+    //       /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    //     );
+    // };
+
+    // if(!validateEmail(email)){
     //     const response = res.send({
     //         status: 'Gagal',
-    //         message: 'Panjang karakter email setidaknya 15 karakter atau lebih!',
+    //         message: 'Alamat email tidak valid.',
     //     });
     //     response.status(400);
     //     return response;
-    // }
+    // }  
 
     // Password validation
     if (password === '') {
@@ -153,15 +149,8 @@ exports.editUserById = async (req, res) => {
         response.status(400);
         return response;
     }
-    // if (password.length < 6) {
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Panjang karakter password setidaknya 6 karakter atau lebih!',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }
-    // Nama toko Validation
+
+    // Nama_toko validation
     if (nama_toko === '') {
         const response = res.send({
             status: 'Gagal',
@@ -170,14 +159,6 @@ exports.editUserById = async (req, res) => {
         response.status(400);
         return response;
     }
-    // if (nama_toko.length < 4) {
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Panjang karakter nama toko setidaknya 4 karakter atau lebih.',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }
 
     // Check if the id is exist in database.
     const [rows] = await db.promise().query('SELECT * FROM tb_user WHERE id_user = ?', [req.params.id]);
@@ -185,7 +166,7 @@ exports.editUserById = async (req, res) => {
         return res.status(404).json({ message: 'ID user tidak dapat ditemukan!' });
     }
 
-    // Check if the username is not used by other user.
+    // Check if the email is not used by other user.
     const [check] = await db.promise().query('SELECT * FROM tb_user WHERE email = ?', [req.body.email]);
     if (check.length === 0) {
         const salt = await bcrypt.genSalt();
@@ -197,7 +178,7 @@ exports.editUserById = async (req, res) => {
         );
     }
 
-    // Check if the username is already used by other user.
+    // Check if the email is already used by other user.
     if (check.rows !== 0 && check[0].id !== req.params.id) {
         return res.status(500).json({ message: 'Email sudah digunakan!' });
     }
@@ -235,6 +216,36 @@ exports.addProducts = async (req, res) => {
         stok,
         foto_produk,
     } = req.body;
+
+    // Nama produk validation
+    if (nama_produk === '') {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Nama produk tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
+    }
+
+    // Harga validation
+    if (harga === '') {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Harga produk tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
+    }
+
+    // Stok validation
+    if (stok === '') {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Stok tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
+    }
 
     const id_product = nanoid(16);
 
@@ -290,9 +301,28 @@ exports.editProductById = async (req, res) => {
         foto_produk,
     } = req.body;
 
-    
+    // Nama produk validation
+    if (nama_produk === '') {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Nama produk tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
+    }
+
+    // Harga validation
+    if (harga === '') {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Harga produk tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
+    }
+
     // Check if the id is exist in database.
-    const [rows] = await db.promise().query('SELECT * FROM tb_produk WHERE id_product = ?', [req.params.id]);
+    const [rows] = await db.promise().query('SELECT * FROM tb_produk WHERE id_produk = ?', [req.params.id]);
     if (rows.length === 0) {
         return res.status(404).json({ message: 'ID produk tidak dapat ditemukan!' });
     }
@@ -301,7 +331,7 @@ exports.editProductById = async (req, res) => {
     const [check] = await db.promise().query('SELECT * FROM tb_produk WHERE nama_produk = ?', [req.body.nama_produk]);
     if (check.length === 0) {
 
-        await db.promise().query('UPDATE tb_produk SET nama_produk = ?, harga = ?,  stok = ?, foto_produk = ? WHERE id_produk = ?', [nama_produk, harga, stok, foto_produk, req.params.id]);
+        await db.promise().query('UPDATE tb_produk SET nama_produk = ?, harga = ?,  stok = ?, foto = ? WHERE id_produk = ?', [nama_produk, harga, stok, foto_produk, req.params.id]);
         return res.status(200).json(
             { message: 'Data telah diperbarui.', id: req.params.id },
         );
@@ -312,7 +342,7 @@ exports.editProductById = async (req, res) => {
         return res.status(500).json({ message: 'Nama produk sudah digunakan!' });
     }
 
-    await db.promise().query('UPDATE tb_produk SET nama_produk = ?, harga = ?,  stok = ?, foto_produk = ? WHERE id_produk = ?', [nama_produk, harga, stok, foto_produk, req.params.id_product]);
+    await db.promise().query('UPDATE tb_produk SET nama_produk = ?, harga = ?,  stok = ?, foto = ? WHERE id_produk = ?', [nama_produk, harga, stok, foto_produk, req.params.id_product]);
     return res.status(200).json(
         { message: 'Data telah diperbarui.', id: req.params.id },
     );
@@ -330,27 +360,37 @@ exports.deleteProductById = async (req, res) => {
     return res.status(200).json({ message: 'Data produk telah dihapus', data: rows });
 };
 
-exports.addProducts = async (req, res) => {
+exports.addOrder = async (req, res) => {
     const {
-        nama_produk,
+        tgl_order,
         harga,
-        stok,
-        foto_produk,
+        qty
     } = req.body;
 
-    const id_product = nanoid(16);
-
-    
-    const [rows] = await db.promise().query(`SELECT * FROM tb_produk WHERE nama_produk = '${req.body.nama_produk}'`);
-    if (rows.length !== 0) {
-        return res.status(500).json({ message: 'Nama produk sudah ada' });
+    // Tanggal Order Validation
+    if (tgl_order === '') {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Tanggal produk tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
     }
 
+    const id_order = nanoid(16);
+
+    
+    const [rows] = await db.promise().query(`SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE id_order = '${req.params.id}'`);
+    if (rows.length !== 0) {
+        return res.status(500).json({ message: 'ID order produk sudah ada' });
+    }
+
+    await db.promise().query(`INSERT INTO tb_produk(id_produk,id_user,nama_produk,harga,stok, foto_toko) VALUES('${id_product}', '${id_user}', '${nama_produk}', '${harga}', '${stok}'), '${foto_produk}'`);
     await db.promise().query(`INSERT INTO tb_produk(id_produk,id_user,nama_produk,harga,stok, foto_toko) VALUES('${id_product}', '${id_user}', '${nama_produk}', '${harga}', '${stok}'), '${foto_produk}'`);
 
     const response = res.send({
         status: 'Sukses',
-        message: 'Produk baru berhasil ditambahkan.',
+        message: 'Order baru berhasil ditambahkan.',
         data: {
             produkId: id_product,
         },
@@ -364,44 +404,70 @@ exports.getAllOrders = async (req, res) => {
     res.send(result[0]);
 };
 
+exports.getOrderByDate = async (req, res) => {
+
+    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE tb_order.tgl_order = ?', [req.params.id]);
+
+    if (rows.length === 0) {
+        return res.status(404).json({ message: 'ID produk tidak dapat ditemukan!' });
+    }
+
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    return response;
+};
+
+exports.getOrderById = async (req, res) => {
+
+    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE tb_order.id_order = ?', [req.params.id]);
+
+    if (rows.length === 0) {
+        return res.status(404).json({ message: 'ID order tidak dapat ditemukan!' });
+    }
+
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    return response;
+};
+
 exports.login = async (req, res) => {
     const {
         email,
         password,
     } = req.body;
 
+    // Email validation
     if (email === '') {
         const response = res.send({
             status: 'Gagal',
-            message: 'Email tidak boleh kosong',
+            message: 'Email tidak boleh kosong.',
         });
         response.status(400);
         return response;
     }
-    // if (email.length < 15) {
+
+    // const validateEmail = (email) => {
+    //     return email.match(
+    //       /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    //     );
+    // };
+
+    // if(!validateEmail(email)){
     //     const response = res.send({
     //         status: 'Gagal',
-    //         message: 'Panjang karakter email setidaknya 15 karakter atau lebih!',
+    //         message: 'Alamat email tidak valid.',
     //     });
     //     response.status(400);
     //     return response;
-    // }
+    // }  
+
+    // Password validation
     if (password === '') {
         const response = res.send({
             status: 'Gagal',
-            message: 'Password tidak boleh kosong',
+            message: 'Password tidak boleh kosong.',
         });
         response.status(400);
         return response;
     }
-    // if (password.length < 6) {
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Panjang karakter password setidaknya 6 karakter atau lebih!',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }
 
     const [rows] = await db.promise().query(`SELECT * FROM tb_user WHERE email = '${req.body.email}'`);
     if (rows.length !== 0) {

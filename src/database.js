@@ -34,8 +34,4 @@ module.exports = mysql.createConnection({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
 
-//     host: 'localhost',
-//     user: 'root',
-//     password: '',
-//     database: 'kewarung_db',
 });
