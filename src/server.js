@@ -16,6 +16,10 @@ app.use(cookieParser());
 app.use(express.urlencoded({
     extended: true,
 }));
+//tes
+app.get('/', function(req, res) {
+    res.send('hello word');
+});
 
 //fire it up
 app.use(routes);
