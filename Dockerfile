@@ -9,8 +9,8 @@ RUN npm install
 # Bundle app source
 COPY . .
 # Binding port
-EXPOSE 8000
-ENV PORT 8000
-ENV HOST 0.0.0.0
+EXPOSE 8080
+ENV port 8080
+ENV host 0.0.0.0
 # Command to run our app
-CMD [ "npm","run", "start"]
+CMD [ "npm", "start"]
