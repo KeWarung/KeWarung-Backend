@@ -8,7 +8,8 @@ const bcrypt = require('bcrypt');
 const axios = require('axios');
 const db = require('./database');
 require('dotenv').config();
-console.log(process.env.SECRET_STRING) // remove this after you've confirmed it is working
+const Product = require('./models/products');
+const cart = require('./models/cart');
 
 const maxExpire = 3 * 24 * 60 * 60;
 const createToken = (id) => jwt.sign({ id }, process.env.SECRET_STRING, {
@@ -39,20 +40,20 @@ exports.signupPost = async (req, res) => {
         return response;
     }
 
-    // const validateEmail = (email) => {
-    //     return email.match(
-    //       /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    //     );
-    // };
+    const validateEmail = (email) => {
+        return email.match(
+          /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
+    };
 
-    // if(!validateEmail(email)){
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Alamat email tidak valid.',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }  
+    if(!validateEmail(email)){
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Alamat email tidak valid.',
+        });
+        response.status(400);
+        return response;
+    }  
 
     const [rows] = await db.promise().query(`SELECT * FROM tb_user WHERE email = '${req.body.email}'`);
     if (rows.length !== 0) {
@@ -125,20 +126,20 @@ exports.editUserById = async (req, res) => {
         return response;
     }
 
-    // const validateEmail = (email) => {
-    //     return email.match(
-    //       /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    //     );
-    // };
+    const validateEmail = (email) => {
+        return email.match(
+          /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
+    };
 
-    // if(!validateEmail(email)){
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Alamat email tidak valid.',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }  
+    if(!validateEmail(email)){
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Alamat email tidak valid.',
+        });
+        response.status(400);
+        return response;
+    }  
 
     // Password validation
     if (password === '') {
@@ -268,6 +269,16 @@ exports.addProducts = async (req, res) => {
     return response;
 };
 
+exports.addToCart = async (req, res, next) => {
+    
+    const [rows] = await db.promise().query(`SELECT * FROM tb_produk WHERE id_produk = '${req.params.id}'`);
+    
+    cart.save(this.addToCart)
+    if (rows.length !== 0) {
+        return res.status(500).json({ message: 'Nama produk sudah ada' });
+    }
+
+};
 
 exports.getProductById = async (req, res) => {
 
@@ -281,7 +292,7 @@ exports.getProductById = async (req, res) => {
     return response;
 };
 
-exports.getProductByIdUser = async () => {
+exports.getProductByIdUser = async (req, res) => {
     const [rows] = await db.promise().query('SELECT * FROM tb_produk WHERE id_user = ?', [req.params.id]);
 
     if (rows.length === 0) {
@@ -290,6 +301,30 @@ exports.getProductByIdUser = async () => {
 
     const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
     return response;
+};
+
+exports.getProductByStok = async (req, res) => {
+    const [rows] = await db.promise().query('SELECT * FROM tb_produk WHERE stok < ? ', [req.params.id]);
+
+    if (rows.length === 0) {
+        return res.status(404).json({ message: 'Tidak ada produk dengan stok tersebut!' });
+    }
+
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    return response;
+};
+
+exports.getProductByName = async (req, res) => {
+    const sql ="SELECT * FROM tb_produk WHERE nama_produk LIKE ? AND id_user = ? ";
+    const [rows] = await db.promise().query(sql, [req.params.id, req.params.idUser]);
+
+    if (rows.length === 0) {
+        return res.status(404).json({ message: 'Produk tidak ditemukan.' });
+    }
+
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    return response;
+
 };
 
 exports.editProductById = async (req, res) => {
@@ -404,18 +439,6 @@ exports.getAllOrders = async (req, res) => {
     res.send(result[0]);
 };
 
-exports.getOrderByDate = async (req, res) => {
-
-    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE tb_order.tgl_order = ?', [req.params.id]);
-
-    if (rows.length === 0) {
-        return res.status(404).json({ message: 'ID produk tidak dapat ditemukan!' });
-    }
-
-    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
-    return response;
-};
-
 exports.getOrderById = async (req, res) => {
 
     const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE tb_order.id_order = ?', [req.params.id]);
@@ -427,7 +450,7 @@ exports.getOrderById = async (req, res) => {
     const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
     return response;
 };
-
+  
 exports.login = async (req, res) => {
     const {
         email,
@@ -444,20 +467,20 @@ exports.login = async (req, res) => {
         return response;
     }
 
-    // const validateEmail = (email) => {
-    //     return email.match(
-    //       /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    //     );
-    // };
+    const validateEmail = (email) => {
+        return email.match(
+          /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
+    };
 
-    // if(!validateEmail(email)){
-    //     const response = res.send({
-    //         status: 'Gagal',
-    //         message: 'Alamat email tidak valid.',
-    //     });
-    //     response.status(400);
-    //     return response;
-    // }  
+    if(!validateEmail(email)){
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Alamat email tidak valid.',
+        });
+        response.status(400);
+        return response;
+    }  
 
     // Password validation
     if (password === '') {
@@ -479,11 +502,11 @@ exports.login = async (req, res) => {
 
         if (auth) {
             const token = createToken(rows[0].id);
-            console.log(token);
             res.cookie('jwt', token, { httpOnly: false, maxAge: maxExpire * 1000 });
             const response = res.status(200).json({
                 message: 'Berhasil Login.',
                 user_id: rows[0].id_user,
+                token: token,
             });
             return response;
         }

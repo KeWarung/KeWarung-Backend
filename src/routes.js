@@ -14,11 +14,15 @@ const {
     addProducts,
     getProductById,
     getProductByIdUser,
+    getProductByStok,
+    getProductByName,
     editProductById,
     deleteProductById,
     getAllOrders,
     getOrderById,
-    getOrderByDate,
+    addToCart,
+    addOrder,
+    editCart,
     login,
     logout,
     
@@ -32,29 +36,28 @@ const routes = express.Router();
 routes.get('/users', getAllUsers);
 routes.post('/users', signupPost); 
 
-routes.get('/users/:id', getUserById); // Token tidak terdeteksi, harap login terlebih dahulu!
-routes.put('/users/:id', requireAuth, editUserById); // Token tidak terdeteksi, harap login terlebih dahulu! 
-routes.delete('/users/:id', deleteUserById); // Token tidak terdeteksi, harap login terlebih dahulu!
+routes.get('/users/:id', requireAuth, getUserById); 
+routes.put('/users/:id', requireAuth, editUserById);  
+routes.delete('/users/:id', requireAuth, deleteUserById); 
 
-routes.get('/products', getAllProducts);
-routes.post('/products', addProducts)
+routes.get('/products', requireAuth, getAllProducts);
+routes.post('/products', requireAuth, addProducts);
 
-routes.get('/products/:id', getProductById); // Token tidak terdeteksi, harap login terlebih dahulu!
-routes.get('products/:iduser', getProductByIdUser); // still development
-// routes.get('/products/:stok', requireAuth, getProductByStok); // still development
-routes.put('/products/:id', editProductById); // Token tidak terdeteksi, harap login terlebih dahulu!
-routes.delete('/products/:id', deleteProductById); // Why id product not delete?
+routes.get('/products/:id', requireAuth, getProductById); 
+routes.get('/products-users/:id', requireAuth, getProductByIdUser); 
+routes.get('/products-stock/:id', requireAuth, getProductByStok);
+routes.get('/products-name/:id&:idUser', requireAuth, getProductByName);
+routes.put('/products/:id', requireAuth, editProductById); 
+routes.delete('/products/:id', requireAuth, deleteProductById); 
 
-routes.get('/orders', getAllOrders); //still development
-// routes.post('/orders', addOrder);
+routes.get('/orders', requireAuth, getAllOrders); 
+routes.post('/cart/add.js', requireAuth, addToCart);
+// routes.post('/orders', requireAuth, addOrder);
 
-routes.get('/orders/:id', getOrderById); //Token tidak terdeteksi, harap login terlebih dahulu!
-routes.get('/orders/:date', getOrderByDate); //still development
-// routes.put('/orders', requireAuth, editOder); //still development
-// routes.delete('/orders', requireAuth, deleteOrder); //still development
+routes.get('/orders/:id', requireAuth, getOrderById); 
+// routes.put('/orders', requireAuth, editCart); //still development
 
-routes.post('/login', login); // secretOrPrivateKey must have a value
-
+routes.post('/login', login); 
 routes.post('/logout', logout); 
 
 module.exports = routes;
