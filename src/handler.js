@@ -8,8 +8,6 @@ const bcrypt = require('bcrypt');
 const axios = require('axios');
 const db = require('./database');
 require('dotenv').config();
-const Product = require('./models/products');
-const cart = require('./models/cart');
 
 const maxExpire = 3 * 24 * 60 * 60;
 const createToken = (id) => jwt.sign({ id }, process.env.SECRET_STRING, {
