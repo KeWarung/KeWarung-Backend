@@ -20,7 +20,6 @@ const {
     deleteProductById,
     getAllOrders,
     getOrderById,
-    addToCart,
     addOrder,
     editCart,
     login,
@@ -51,7 +50,6 @@ routes.put('/products/:id', requireAuth, editProductById);
 routes.delete('/products/:id', requireAuth, deleteProductById); 
 
 routes.get('/orders', requireAuth, getAllOrders); 
-routes.post('/cart/add.js', requireAuth, addToCart);
 // routes.post('/orders', requireAuth, addOrder);
 
 routes.get('/orders/:id', requireAuth, getOrderById); 
