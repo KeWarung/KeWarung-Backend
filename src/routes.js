@@ -21,7 +21,7 @@ const {
     getAllOrders,
     getOrderById,
     addOrder,
-    editCart,
+    getReport,
     login,
     logout,
     
@@ -50,10 +50,10 @@ routes.put('/products/:id', requireAuth, editProductById);
 routes.delete('/products/:id', requireAuth, deleteProductById); 
 
 routes.get('/orders', requireAuth, getAllOrders); 
-// routes.post('/orders', requireAuth, addOrder);
-
+routes.post('/orders/:idUser&:idProduct', requireAuth, addOrder);
 routes.get('/orders/:id', requireAuth, getOrderById); 
-// routes.put('/orders', requireAuth, editCart); //still development
+
+routes.get('/report/:tgl&:tahun&:idUser', requireAuth, getReport)
 
 routes.post('/login', login); 
 routes.post('/logout', logout); 
