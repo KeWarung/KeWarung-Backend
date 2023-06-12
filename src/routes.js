@@ -40,7 +40,7 @@ routes.put('/users/:id', requireAuth, editUserById);
 routes.delete('/users/:id', requireAuth, deleteUserById); 
 
 routes.get('/products', requireAuth, getAllProducts);
-routes.post('/products', requireAuth, addProducts);
+routes.post('/products/:idUser', requireAuth, addProducts);
 
 routes.get('/products/:id', requireAuth, getProductById); 
 routes.get('/products-users/:id', requireAuth, getProductByIdUser); 
