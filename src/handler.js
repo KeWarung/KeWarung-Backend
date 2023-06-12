@@ -213,7 +213,7 @@ exports.addProducts = async (req, res) => {
         nama_produk,
         harga,
         stok,
-        foto_produk,
+        foto,
     } = req.body;
 
     // Nama produk validation
@@ -254,7 +254,7 @@ exports.addProducts = async (req, res) => {
         return res.status(500).json({ message: 'Nama produk sudah ada' });
     }
 
-    await db.promise().query(`INSERT INTO tb_produk(id_produk,id_user,nama_produk,harga,stok, foto_toko) VALUES('${id_product}', '${id_user}', '${nama_produk}', '${harga}', '${stok}'), '${foto_produk}'`);
+    await db.promise().query(`INSERT INTO tb_produk(id_produk,id_user,nama_produk,harga,stok, foto) VALUES('${id_product}', '${req.params.idUser}', '${nama_produk}', '${harga}', '${stok}', '${foto}')`);
 
     const response = res.send({
         status: 'Sukses',
@@ -476,31 +476,7 @@ exports.login = async (req, res) => {
         password,
     } = req.body;
 
-    // Email validation
-    if (email === '') {
-        const response = res.send({
-            status: 'Gagal',
-            message: 'Email tidak boleh kosong.',
-        });
-        response.status(400);
-        return response;
-    }
-
-    const validateEmail = (email) => {
-        return email.match(
-          /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-        );
-    };
-
-    if(!validateEmail(email)){
-        const response = res.send({
-            status: 'Gagal',
-            message: 'Alamat email tidak valid.',
-        });
-        response.status(400);
-        return response;
-    }  
-
+    
     // Password validation
     if (password === '') {
         const response = res.send({
