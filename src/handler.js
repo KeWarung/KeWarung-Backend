@@ -267,17 +267,6 @@ exports.addProducts = async (req, res) => {
     return response;
 };
 
-exports.addToCart = async (req, res, next) => {
-    
-    const [rows] = await db.promise().query(`SELECT * FROM tb_produk WHERE id_produk = '${req.params.id}'`);
-    
-    cart.save(this.addToCart)
-    if (rows.length !== 0) {
-        return res.status(500).json({ message: 'Nama produk sudah ada' });
-    }
-
-};
-
 exports.getProductById = async (req, res) => {
 
     const [rows] = await db.promise().query('SELECT * FROM tb_produk WHERE id_produk = ?', [req.params.id]);
@@ -397,11 +386,14 @@ exports.addOrder = async (req, res) => {
     const {
         tgl_order,
         harga,
-        qty
+        qty,
+        status,
+        total,
+        subtotal,
     } = req.body;
 
     // Tanggal Order Validation
-    if (tgl_order === '') {
+    if (tgl_order === undefined) {
         const response = res.send({
             status: 'Gagal',
             message: 'Tanggal produk tidak boleh kosong.',
@@ -410,22 +402,39 @@ exports.addOrder = async (req, res) => {
         return response;
     }
 
-    const id_order = nanoid(16);
-
-    
-    const [rows] = await db.promise().query(`SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE id_order = '${req.params.id}'`);
-    if (rows.length !== 0) {
-        return res.status(500).json({ message: 'ID order produk sudah ada' });
+    // Harga Validation
+    if (harga === 0) {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Harga tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
     }
 
-    await db.promise().query(`INSERT INTO tb_produk(id_produk,id_user,nama_produk,harga,stok, foto_toko) VALUES('${id_product}', '${id_user}', '${nama_produk}', '${harga}', '${stok}'), '${foto_produk}'`);
-    await db.promise().query(`INSERT INTO tb_produk(id_produk,id_user,nama_produk,harga,stok, foto_toko) VALUES('${id_product}', '${id_user}', '${nama_produk}', '${harga}', '${stok}'), '${foto_produk}'`);
+    // Qty Order Validation
+    if (qty === 0) {
+        const response = res.send({
+            status: 'Gagal',
+            message: 'Jumlah pembelian produk tidak boleh kosong.',
+        });
+        response.status(400);
+        return response;
+    }
+
+    const id_order = nanoid(16);
+    const id_detailorder = nanoid(16);
+
+    await db.promise().query(`INSERT INTO tb_order VALUES('${id_order}', '${req.params.idUser}', '${tgl_order}', '${status}', '${total}')`) ;
+    await db.promise().query(`INSERT INTO tb_detailorder VALUES('${id_detailorder}', '${id_order}', '${qty}', '${req.params.idProduct}', '${subtotal}') `);
 
     const response = res.send({
         status: 'Sukses',
         message: 'Order baru berhasil ditambahkan.',
         data: {
-            produkId: id_product,
+            orderId: id_order,
+            tglOrder: tgl_order,
+            total: total,
         },
     });
     response.status(201);
@@ -448,7 +457,19 @@ exports.getOrderById = async (req, res) => {
     const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
     return response;
 };
-  
+
+exports.getReport = async (req, res) => {
+
+    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE month(tb_order.tgl_order) = ? AND year(tb_order.tgl_order) AND tb_order.id_user = ?', [req.params.tgl, req.params.tahun, req.params.idUser]);
+
+    if (rows.length === 0) {
+        return res.status(404).json({ message: 'Data laporan tidak ada!' });
+    }
+
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    return response;
+};
+
 exports.login = async (req, res) => {
     const {
         email,
