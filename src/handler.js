@@ -171,7 +171,7 @@ exports.editUserById = async (req, res) => {
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-        await db.promise().query('UPDATE tb_user SET email = ?, password = ?,  nama_toko = ?, foto_toko = ? WHERE id_user = ?', [email, hashedPassword, nama_toko, foto_toko, req.params.id]);
+        await db.promise().query('UPDATE tb_user SET foto_toko = ? WHERE id_user = ?', [foto_toko, req.params.id]);
         return res.status(200).json(
             { message: 'Data telah diperbarui.', id: req.params.id },
         );
@@ -185,7 +185,7 @@ exports.editUserById = async (req, res) => {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    await db.promise().query('UPDATE tb_user SET email = ?, password = ?,  nama_toko = ? foto_toko = ? WHERE id_user = ?', [email, hashedPassword, nama_toko, req.params.id]);
+    await db.promise().query('UPDATE tb_user SET foto_toko = ? WHERE id_user = ?', [foto_toko, req.params.id]);
     return res.status(200).json(
         { message: 'Data telah diperbarui.', id: req.params.id },
     );
