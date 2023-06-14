@@ -248,12 +248,6 @@ exports.addProducts = async (req, res) => {
 
     const id_product = nanoid(16);
 
-    
-    const [rows] = await db.promise().query(`SELECT * FROM tb_produk WHERE nama_produk = '${req.body.nama_produk}'`);
-    if (rows.length !== 0) {
-        return res.status(500).json({ message: 'Nama produk sudah ada' });
-    }
-
     await db.promise().query(`INSERT INTO tb_produk(id_produk,id_user,nama_produk,harga,stok, foto) VALUES('${id_product}', '${req.params.idUser}', '${nama_produk}', '${harga}', '${stok}', '${foto}')`);
 
     const response = res.send({
@@ -469,6 +463,21 @@ exports.getReport = async (req, res) => {
     const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
     return response;
 };
+
+exports.sendData = async (req, res) => {
+
+    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE month(tb_order.tgl_order) = ? AND year(tb_order.tgl_order) AND tb_order.id_user = ? INTO OUTFILE "/path/to/file.csv"', [req.params.tgl, req.params.tahun, req.params.idUser]);
+    if (rows.length === 0) {
+        return res.status(404).json({ message: 'Data laporan tidak ada!' });
+    }
+
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    return response;
+    const csvData = $.csv.fromObjects(rows);
+    console.log(csvData);
+    
+    
+}
 
 exports.login = async (req, res) => {
     const {
