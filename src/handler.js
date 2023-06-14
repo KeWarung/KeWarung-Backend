@@ -274,7 +274,7 @@ exports.getProductById = async (req, res) => {
 };
 
 exports.getProductByIdUser = async (req, res) => {
-    const [rows] = await db.promise().query('SELECT * FROM tb_produk WHERE id_user = ?', [req.params.id]);
+    const [rows] = await db.promise().query('SELECT * FROM tb_produk INNER JOIN tb_user ON tb_user.id_user = tb_produk.id_user WHERE tb_user.id_user =  ?', [req.params.id]);
 
     if (rows.length === 0) {
         return res.status(404).json({ message: 'ID produk dengan ID User tersebut tidak dapat ditemukan!' });
