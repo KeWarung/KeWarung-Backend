@@ -310,22 +310,9 @@ exports.getProductByName = async (req, res) => {
 
 exports.editProductById = async (req, res) => {
     const {
-        // id_user,
-        nama_produk,
         harga,
         stok,
-        foto_produk,
     } = req.body;
-
-    // Nama produk validation
-    if (nama_produk === '') {
-        const response = res.send({
-            status: 'Gagal',
-            message: 'Nama produk tidak boleh kosong.',
-        });
-        response.status(400);
-        return response;
-    }
 
     // Harga validation
     if (harga === '') {
@@ -343,22 +330,22 @@ exports.editProductById = async (req, res) => {
         return res.status(404).json({ message: 'ID produk tidak dapat ditemukan!' });
     }
 
-    // Check if the username is not used by other user.
+    // Check if the nama_produk is not used by other user.
     const [check] = await db.promise().query('SELECT * FROM tb_produk WHERE nama_produk = ?', [req.body.nama_produk]);
     if (check.length === 0) {
 
-        await db.promise().query('UPDATE tb_produk SET nama_produk = ?, harga = ?,  stok = ?, foto = ? WHERE id_produk = ?', [nama_produk, harga, stok, foto_produk, req.params.id]);
+        await db.promise().query('UPDATE tb_produk SET harga = ?, stok = ? WHERE id_produk = ?', [harga, stok, req.params.id]);
         return res.status(200).json(
             { message: 'Data telah diperbarui.', id: req.params.id },
         );
     }
 
-    // Check if the username is already used by other user.
+    // Check if the nama produk is already used by other user.
     if (check.rows !== 0 && check[0].id !== req.params.id) {
         return res.status(500).json({ message: 'Nama produk sudah digunakan!' });
     }
 
-    await db.promise().query('UPDATE tb_produk SET nama_produk = ?, harga = ?,  stok = ?, foto = ? WHERE id_produk = ?', [nama_produk, harga, stok, foto_produk, req.params.id_product]);
+    await db.promise().query('UPDATE tb_produk SET harga = ?, stok = ? WHERE id_produk = ?', [nama_produk, harga, stok, foto_produk, req.params.id_product]);
     return res.status(200).json(
         { message: 'Data telah diperbarui.', id: req.params.id },
     );
