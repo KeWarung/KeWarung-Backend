@@ -67,7 +67,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODYxODY4MjIsImV4cCI6MTY4NjQ0NjAyMn0.9PBEVL1xy7v5BLcg5zvB0jG3bcHiCYzMos-RqEXO26c",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODY1NzIzMjIsImV4cCI6MTY4NjgzMTUyMn0.KrdbZApD8P-m99WUkHfbKPmSo4gGEoEfp8X9b89Jw4A",
 							"type": "string"
 						}
 					]
@@ -75,14 +75,17 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/users/1",
+					"raw": "https://kewarungservice-q5cmw4bbyq-et.a.run.app/users/LKCrKSOr75qqGGAm",
+					"protocol": "https",
 					"host": [
-						"localhost"
+						"kewarungservice-q5cmw4bbyq-et",
+						"a",
+						"run",
+						"app"
 					],
-					"port": "8080",
 					"path": [
 						"users",
-						"1"
+						"LKCrKSOr75qqGGAm"
 					]
 				}
 			},
@@ -168,14 +171,24 @@
 			"request": {
 				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"nama_produk\": \"mie\",\r\n    \"harga\" : \"1000\",\r\n    \"stok\" : \"10\",\r\n    \"foto\" : \"mie.jpg\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": "localhost:8080/products",
+					"raw": "localhost:8080/products/LKCrKSOr75qqGGAm",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"products"
+						"products",
+						"LKCrKSOr75qqGGAm"
 					]
 				}
 			},
@@ -234,9 +247,16 @@
 		},
 		{
 			"name": "getProductByName",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
 				"method": "GET",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "localhost:8080/products-name/Kecap&LKCrKSOr75qqGGAm",
 					"host": [
@@ -298,6 +318,10 @@
 			"request": {
 				"method": "DELETE",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "localhost:8080/products/asdcfvghbj456789",
 					"host": [
@@ -315,8 +339,28 @@
 		{
 			"name": "addOrder",
 			"request": {
-				"method": "GET",
-				"header": []
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"tgl_order\" : \"2023-06-12\",\r\n    \"status\" : \"pending\",\r\n    \"total\" : \"100\",\r\n    \"qty\": \"1\",\r\n    \"subtotal\" : \"100\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/orders/LKCrKSOr75qqGGAm&asdcfvghbj456789",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"orders",
+						"LKCrKSOr75qqGGAm&asdcfvghbj456789"
+					]
+				}
 			},
 			"response": []
 		},
@@ -359,9 +403,16 @@
 		},
 		{
 			"name": "getReport",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
 				"method": "GET",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "localhost:8080/report/10&2023&dskmdkk",
 					"host": [
@@ -393,7 +444,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"email\" : \"use76@gmail.com\",\r\n    \"password\" : \"user7\"\r\n}",
+					"raw": "{\r\n    \"email\" : \"user112@gmail.com\",\r\n    \"password\" : \"user-11\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -426,6 +477,24 @@
 					"port": "8080",
 					"path": [
 						"logout"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sendData",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/send",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"send"
 					]
 				}
 			},
