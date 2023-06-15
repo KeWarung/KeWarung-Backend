@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 // const ffmpeg = require('fluent-ffmpeg');
 const axios = require('axios');
 const db = require('./database');
+const FormData = require('form-data');
 require('dotenv').config();
 
 const maxExpire = 3 * 24 * 60 * 60;
@@ -216,6 +217,10 @@ exports.addProducts = async (req, res) => {
         foto,
     } = req.body;
 
+     if (req.file && req.file.cloudStoragePublicUrl) {
+        foto = req.file.cloudStoragePublicUrl
+    }
+
     // Nama produk validation
     if (nama_produk === '') {
         const response = res.send({
@@ -255,6 +260,11 @@ exports.addProducts = async (req, res) => {
         message: 'Produk baru berhasil ditambahkan.',
         data: {
             produkId: id_product,
+            userId : req.params.idUser,
+            NamaProduk : nama_produk,
+            Harga : harga,
+            Stok : stok,
+            Foto : foto,
         },
     });
     response.status(201);
@@ -290,8 +300,8 @@ exports.getProductByStok = async (req, res) => {
     if (rows.length === 0) {
         return res.status(404).json({ message: 'Tidak ada produk dengan stok tersebut!' });
     }
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows });
 
-    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
     return response;
 };
 
@@ -299,11 +309,13 @@ exports.getProductByName = async (req, res) => {
     const sql ="SELECT * FROM tb_produk WHERE nama_produk LIKE ? AND id_user = ? ";
     const [rows] = await db.promise().query(sql, [req.params.id, req.params.idUser]);
 
+    console.log(rows);
+    
     if (rows.length === 0) {
         return res.status(404).json({ message: 'Produk tidak ditemukan.' });
     }
 
-    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows });
     return response;
 
 };
@@ -359,7 +371,7 @@ exports.deleteProductById = async (req, res) => {
         return res.status(404).json({ message: 'ID produk tidak ditemukan.' });
     }
 
-    db.promise().query('DELETE from tb_produk WHERE id_produk = ?', [req.params.id_product]);
+    db.promise().query('DELETE from tb_produk WHERE id_produk = ?', [req.params.id]);
     return res.status(200).json({ message: 'Data produk telah dihapus', data: rows });
 };
 
@@ -441,28 +453,65 @@ exports.getOrderById = async (req, res) => {
 
 exports.getReport = async (req, res) => {
 
-    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE month(tb_order.tgl_order) = ? AND year(tb_order.tgl_order) AND tb_order.id_user = ?', [req.params.tgl, req.params.tahun, req.params.idUser]);
+    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE month(tb_order.tgl_order) = ? AND year(tb_order.tgl_order) = ? AND tb_order.id_user = ?', [req.params.tgl, req.params.tahun, req.params.idUser]);
 
     if (rows.length === 0) {
         return res.status(404).json({ message: 'Data laporan tidak ada!' });
     }
 
-    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
+    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows });
     return response;
 };
 
 exports.sendData = async (req, res) => {
 
-    const [rows] = await db.promise().query('SELECT * FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order WHERE month(tb_order.tgl_order) = ? AND year(tb_order.tgl_order) AND tb_order.id_user = ? INTO OUTFILE "/path/to/file.csv"', [req.params.tgl, req.params.tahun, req.params.idUser]);
+    const [rows] = await db.promise().query('SELECT tb_order.tgl_order,tb_produk.nama_produk,tb_order.total,tb_produk.stok FROM tb_order INNER JOIN tb_detailorder ON tb_order.id_order = tb_detailorder.id_order INNER JOIN tb_produk ON tb_detailorder.id_produk = tb_produk.id_produk WHERE month(tb_order.tgl_order) = ? AND year(tb_order.tgl_order) = ? AND tb_order.id_user = ? ', [req.params.tgl, req.params.tahun, req.params.idUser]);
+
     if (rows.length === 0) {
         return res.status(404).json({ message: 'Data laporan tidak ada!' });
     }
 
-    const response = res.status(200).json({ message: 'Data ditemukan. ', data: rows[0] });
-    return response;
-    const csvData = $.csv.fromObjects(rows);
-    console.log(csvData);
+    const formattedRows = rows.map((obj) => {
+        const originalDate = new Date(obj.tgl_order);
+        const formattedDate = `${originalDate.getMonth() + 1}/${originalDate.getDate()}/${originalDate.getFullYear()}`;
+        
+        return { ...obj, tgl_order: formattedDate };
+    });
+
+    const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+
+    const csvWriter = createCsvWriter({
+        path: './output/file.csv',
+        header: [
+            {id: 'nama_produk', title: 'nama_produk'},
+            {id: 'total', title: 'total'},
+            {id: 'tgl_order', title: 'tgl_order'},
+            {id: 'stok', title: 'stok'}
+        ]
+    });
+     
+    csvWriter.writeRecords(formattedRows)       // returns a promise
+        .then(() => {
+            console.log('...Done');
+        });
+
+    // post to .h5
+    const postToModel = () => {
+        const form = new FormData();
+        form.append('csv_file', fs.createReadStream('./output/file.csv'));
     
+        axios.post(`https://kewarungserviceml-q5cmw4bbyq-et.a.run.app/proses-csv`, form) 
+        .then((axiosRes) => {
+            console.log(axiosRes.data);
+            res.status(200).send({
+                message: "Data berhasil dikirim",
+            });
+        })
+            .catch((error) => {
+                res.status(500).send({ message: `error: ${error.message}` });
+            });
+    };
+
     
 }
 
@@ -513,3 +562,4 @@ exports.logout = (req, res) => {
     const response = res.status(200).json({ message: 'Anda telah logout.' });
     return response;
 };
+

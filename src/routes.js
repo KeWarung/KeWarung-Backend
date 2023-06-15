@@ -1,4 +1,5 @@
 const express = require('express');
+
 // const swaggerUi = require('swagger-ui-express');
 // const swaggerDocument = require('../docs/kewarung-openapi.json');
 
@@ -22,6 +23,7 @@ const {
     getOrderById,
     addOrder,
     getReport,
+    sendData,
     login,
     logout,
     
@@ -54,6 +56,8 @@ routes.post('/orders/:idUser&:idProduct', requireAuth, addOrder);
 routes.get('/orders/:id', requireAuth, getOrderById); 
 
 routes.get('/report/:tgl&:tahun&:idUser', requireAuth, getReport)
+
+routes.post('/send/:tgl&:tahun&:idUser', sendData);
 
 routes.post('/login', login); 
 routes.post('/logout', logout); 
