@@ -504,9 +504,14 @@ exports.sendData = async (req, res) => {
         .then((axiosRes) => {
             console.log(axiosRes.data);
             res.status(200).send({
-                message: "Data berhasil dikirim",
+                jenis_barang : ["jenis barang"],
+                thisWeek : ["penjualan minggu ini"],
+                stockNow : ["jumlah stok saat ini"],
+                predict : ["prediksi penjualan minggu depan"],
+                est : ["estimasi jumlah yang harus di restok"],
             });
         })
+        
             .catch((error) => {
                 res.status(500).send({ message: `error: ${error.message}` });
             });
